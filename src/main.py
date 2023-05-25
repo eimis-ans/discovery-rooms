@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import sys
 import os
 import requests
 import time
@@ -11,6 +10,7 @@ from matrix_client.api import MatrixHttpApi
 from matrix_client.room import Room
 from matrix_client.client import MatrixClient
 
+from synapse_client import SynapseAPIClient
 
 def mock_post(index, fail):
     res = lambda: None
@@ -27,7 +27,7 @@ def get_users_in_room_by_token(synapse_url, room_id, access_token):
     print(f"Connect client with access token")
     client = MatrixClient(synapse_url, access_token)
 
-    # get room
+    # get a room
     room = Room(client, room_id)
 
     # get joined members
@@ -45,6 +45,15 @@ def get_users_in_room_by_pwd(synapse_url, dummy_username, dummy_user_password, r
 
     # get room
     room = Room(client, room_id)
+
+    
+    if not room:
+        print(f"Create room")
+        room = client.create_room(room_id)
+    else:
+        print("Room already exists")
+
+    sys.exit(1)
 
     # get joined members
     return list(map(lambda user: user.user_id, room.get_joined_members()))
