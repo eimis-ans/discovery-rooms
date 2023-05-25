@@ -27,7 +27,7 @@ def get_users_in_room_by_token(synapse_url, room_id, access_token):
     print(f"Connect client with access token")
     client = MatrixClient(synapse_url, access_token)
 
-    # get a room
+    # get room
     room = Room(client, room_id)
 
     # get joined members
@@ -52,8 +52,6 @@ def get_users_in_room_by_pwd(synapse_url, dummy_username, dummy_user_password, r
         room = client.create_room(room_id)
     else:
         print("Room already exists")
-
-    sys.exit(1)
 
     # get joined members
     return list(map(lambda user: user.user_id, room.get_joined_members()))
