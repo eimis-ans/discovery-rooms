@@ -1,5 +1,0 @@
-export SYNAPSE_URL="<URL of the synapse server to reach>"
-export ADMIN_ACCESS_TOKEN="<token used to connect to synapse API as an administrator>"
-export DISCOVERY_ROOM_ID="<room id of the discovery room>"
-export DUMMY_USERNAME="<username of the dummy user>"
-export DUMMY_PASSWORD="<password of the dummy user>"

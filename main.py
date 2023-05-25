@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 
 import sys
+import os
 import requests
 import time
+from dotenv import load_dotenv
+
 # from tinydb import TinyDB, Query
 from matrix_client.api import MatrixHttpApi
 from matrix_client.room import Room
@@ -163,13 +166,15 @@ def run_procedure(admin_access_token, room_id, dummy_username, dummy_user_passwo
 
 if __name__ == '__main__':
 
-    admin_access_token = sys.argv[1]
-    room_id = sys.argv[2]
-    dummy_username = sys.argv[3]
-    dummy_user_password = sys.argv[4]
+    load_dotenv()
 
-    # tests argv
-    synapse_url = "http://" + sys.argv[5]
+    admin_access_token = os.environ["ADMIN_ACCESS_TOKEN"]
+    synapse_url = os.environ["SYNAPSE_URL"]
+    room_id = os.environ["DISCOVERY_ROOM_ID"]
+    dummy_username = os.environ["DUMMY_USERNAME"]
+    dummy_user_password = os.environ["DUMMY_PASSWORD"]
+
+    synapse_url = synapse_url if synapse_url.startswith("https://") else "https://" + synapse_url
     mock_flag = False
 
     run_procedure(admin_access_token, room_id, dummy_username, dummy_user_password, mock_flag=mock_flag,
