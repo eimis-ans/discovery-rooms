@@ -1,32 +1,42 @@
 # discovery-rooms
 
-some scripts to automate the creation of discovery rooms mechanism on matrix server
+A script to automate the creation of a discovery room and add all users to it.
+
+⚠️ _A **not** scalable way for users to discover and contact people from other matrix instances_
 
 ## How to run
 
 - create a Python virtual env :
 
-    ```bash
-    python -m venv venv
-    ```
+  ```bash
+  python -m venv venv
+  ```
 
 - install python dependencies :
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+  ```bash
+  pip install -r requirements.txt
+  ```
 
 - copy the .env_template and fill it with values
 
-    ```bash
-    cp .env_template .env
-    vim .env
-    ```
+  ```bash
+  cp .env_template .env
+  vim .env
+  ```
+
+- give it a try
+
+  ```bash
+  python3 src/main.py dry-run
+  ```
+
+  (it will still create the `discoveryroom` if it doesn't exist)
 
 - then run the join-users-to-discovery-room.sh script
 
-    ```bash
-    ./join-users-to-discovery-room.sh
-    ```
+  ```bash
+  ./join-users-to-discovery-room.sh
+  ```
 
   The result will be displayed in the /tmp/join-users-to-discovery-room.log file
