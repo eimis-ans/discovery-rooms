@@ -14,13 +14,16 @@ def parse_get_users(raw_user_name):
 
 def run_procedure(admin_username, admin_password, synapse_url, dry_run):
     synapse_client = SynapseAPIClient(synapse_url, admin_username, admin_password)
-
+   
     error_counts = 0
     print(
         f"Run procedure with synapse_url:%s, dummy_username:%s"
         % (synapse_url, admin_username)
     )
     try:
+        print("Create dummy user if needed")
+        synapse_client.register_dummy_user()
+
         discovery_room_id = synapse_client.getDiscoveryRoomId()
         if not discovery_room_id:
             print("Create discovery room...")

@@ -1,6 +1,8 @@
+import os
 import re
 import time
 import requests
+import hmac, hashlib
 
 from matrix_client.room import Room
 from matrix_client.client import MatrixClient
@@ -104,7 +106,7 @@ class SynapseAPIClient:
         return list(map(lambda user: user.user_id, room.get_joined_members()))
 
     def add_user_in_room(self, room_id, user_id):
-        url = self.base_url + "/_synapse/admin/v1/join/%s" % room_id
+        url = f"{self.base_url}/_synapse/admin/v1/join/%s" % room_id
 
         start_time = time.time()
         res = requests.post(
@@ -125,6 +127,39 @@ class SynapseAPIClient:
         print(f"     Total time Process for user {user_id}: {elapsed_time}")
         return elapsed_time
 
+    def register_dummy_user(self):
+        url = f"{self.base_url}/_synapse/admin/v1/register"
+        nonce = requests.get(url).json()["nonce"]
+        mac = generate_mac(
+            nonce, os.environ["DUMMY_USER"], os.environ["DUMMY_PASSWORD"]
+        )
+
+        registration_res = requests.post(
+            url,
+            json={
+                "nonce": nonce,
+                "username": os.environ["DUMMY_USER"],
+                "displayname": os.environ["DUMMY_USER"],
+                "password": os.environ["DUMMY_PASSWORD"],
+                "admin": False,
+                "mac": mac,
+            },
+        ).json()
+
+        print(registration_res)
+        
+        if (
+            registration_res["user_id"]
+            == f"@{os.environ['DUMMY_USER']}:{self.domain_no_port}"
+        ):
+            print("Dummy user created")
+        elif registration_res["errcode"] == "M_USER_IN_USE":
+            print("User was already created")
+        else:
+            raise Exception("Error creating dummy user", registration_res)
+
+        return
+
 
 def remove_after_last_colon(text):
     pattern = r"(.*):[^:]*$"
@@ -133,3 +168,23 @@ def remove_after_last_colon(text):
         return match.group(1)
     else:
         return text
+
+
+def generate_mac(nonce, user, password, admin=False, user_type=None):
+    mac = hmac.new(
+        key=bytearray(os.environ["SYNAPSE_SECRET"].encode("utf8")),
+        digestmod=hashlib.sha1,
+    )
+
+    mac.update(nonce.encode("utf8"))
+    mac.update(b"\x00")
+    mac.update(user.encode("utf8"))
+    mac.update(b"\x00")
+    mac.update(password.encode("utf8"))
+    mac.update(b"\x00")
+    mac.update(b"admin" if admin else b"notadmin")
+    if user_type:
+        mac.update(b"\x00")
+        mac.update(user_type.encode("utf8"))
+
+    return mac.hexdigest()
