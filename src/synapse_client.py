@@ -4,6 +4,7 @@ import time
 import requests
 import hmac
 import hashlib
+import json
 
 from matrix_client.room import Room
 from matrix_client.client import MatrixClient
@@ -145,7 +146,7 @@ class SynapseAPIClient:
         ).json()
 
         if (
-            registration_res["user_id"]
+            "user_id" in registration_res and registration_res["user_id"]
             == f"@{os.environ['DUMMY_USER']}:{self.domain_no_port}"
         ):
             print("Dummy user created")
