@@ -2,7 +2,8 @@ import os
 import re
 import time
 import requests
-import hmac, hashlib
+import hmac
+import hashlib
 
 from matrix_client.room import Room
 from matrix_client.client import MatrixClient
@@ -41,15 +42,12 @@ class SynapseAPIClient:
         auth_data = response.json()
         return auth_data["access_token"]
 
-    def getDiscoveryRoomId(self):
-        try:
-            room_url = f"{self.base_url}/{self.client_path}/directory/room/%23{self.discovery_room_alias}%3A{self.domain_no_port}"
-            response = requests.get(room_url, headers=self.headers)
-            response.raise_for_status()
-            return response.json()["room_id"]
-        except Exception as e:
-            print(e)
-            return None
+    def getDiscoveryRoomId(self, url):
+        remote_domain_no_port = domain_not_port(url)
+        room_url = f"{self.base_url}/{self.client_path}/directory/room/%23{self.discovery_room_alias}%3A{remote_domain_no_port}"
+        response = requests.get(room_url, headers=self.headers)
+        response.raise_for_status()
+        return response.json()["room_id"]
 
     def getAllUserFromHomeserver(self):
         room_url = (
@@ -146,8 +144,6 @@ class SynapseAPIClient:
             },
         ).json()
 
-        print(registration_res)
-        
         if (
             registration_res["user_id"]
             == f"@{os.environ['DUMMY_USER']}:{self.domain_no_port}"
@@ -160,14 +156,35 @@ class SynapseAPIClient:
 
         return
 
+    def join_discoveryroom(self, remote_url):
+        room_id = self.getDiscoveryRoomId(remote_url)
+        url = f"{self.base_url}/_matrix/client/r0/join/{room_id}"
 
-def remove_after_last_colon(text):
+        if self.domain_no_port != remote_url:
+            url = url + f"?server_name={remote_url}"
+
+        res = requests.post(
+            url,
+            headers=self.headers,
+            json={"reason": "dummy user joins discovery room"},
+        )
+        res.raise_for_status()
+        print("Join remote discovery room : ok")
+
+
+def domain_not_port(url):
+    return remove_after_last_colon(url).replace("https://", "").replace("http://", "")
+
+
+def remove_after_last_colon(url):
+    if url.count(':') < 2:
+        return url
     pattern = r"(.*):[^:]*$"
-    match = re.match(pattern, text)
+    match = re.match(pattern, url)
     if match:
         return match.group(1)
     else:
-        return text
+        return url
 
 
 def generate_mac(nonce, user, password, admin=False, user_type=None):
