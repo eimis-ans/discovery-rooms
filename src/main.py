@@ -12,19 +12,24 @@ def parse_get_users(raw_user_name):
     return list(map(lambda x: x["name"], raw_user_name))
 
 
-def run_procedure(admin_username, admin_password, synapse_url, dry_run):
-    synapse_client = SynapseAPIClient(synapse_url, admin_username, admin_password)
-   
+def run_procedure(admin_username, admin_password, synapse_url, remote_synapse_url, dry_run):
+
+    print(f"""--- Run procedure ---
+          admin user : {admin_username}
+          synapse_url: {synapse_url}
+          remote_synapse_url: {remote_synapse_url}
+          dry_run: {dry_run}
+          """)
+
+    synapse_client = SynapseAPIClient(
+        synapse_url, admin_username, admin_password)
+
     error_counts = 0
-    print(
-        f"Run procedure with synapse_url:%s, dummy_username:%s"
-        % (synapse_url, admin_username)
-    )
     try:
         print("Create dummy user if needed")
         synapse_client.register_dummy_user()
 
-        discovery_room_id = synapse_client.getDiscoveryRoomId()
+        discovery_room_id = synapse_client.getDiscoveryRoomId(synapse_url)
         if not discovery_room_id:
             print("Create discovery room...")
             discovery_room_id = synapse_client.createDiscoveryRoom()
@@ -43,7 +48,8 @@ def run_procedure(admin_username, admin_password, synapse_url, dry_run):
         print("Users in room (with dummy users): %s" % len(users_in_room))
 
         # list all users missing the room
-        users_missing_in_room = set(all_user_ids).difference(set(users_in_room))
+        users_missing_in_room = set(
+            all_user_ids).difference(set(users_in_room))
         print("Users missing in room : %s" % len(users_missing_in_room))
 
         # add user one by one
@@ -65,8 +71,16 @@ def run_procedure(admin_username, admin_password, synapse_url, dry_run):
                 1
             )  # use async programming instead : https://realpython.com/python-sleep/#adding-a-python-sleep-call-with-async-io
 
+        dummy_client = SynapseAPIClient(
+            synapse_url, os.environ["DUMMY_USER"], os.environ["DUMMY_PASSWORD"])
+        dummy_client.join_discoveryroom(remote_synapse_url)
+
     except Exception as e:
         print(e)
+
+
+def add_http_if_needed(url):
+    return url if url.startswith("https://") or url.startswith("http://") else "https://" + url
 
 
 if __name__ == "__main__":
@@ -74,15 +88,14 @@ if __name__ == "__main__":
 
     dry_run = len(sys.argv) > 1 and sys.argv[1] == "dry-run"
     synapse_url = os.environ["SYNAPSE_URL"]
+    remote_synapse_url = os.environ["REMOTE_SYNAPSE_URL"]
     admin_username = os.environ["ADMIN_USERNAME"]
     admin_password = os.environ["ADMIN_PASSWORD"]
 
-    synapse_url = (
-        synapse_url
-        if synapse_url.startswith("https://") or synapse_url.startswith("http://")
-        else "https://" + synapse_url
-    )
+    synapse_url = add_http_if_needed(synapse_url)
 
-    run_procedure(
-        admin_username, admin_password, synapse_url=synapse_url, dry_run=dry_run
-    )
+    remote_synapse_url = remote_synapse_url.replace(
+        "https://", "").replace("http://", "")
+
+    run_procedure(admin_username, admin_password, synapse_url=synapse_url,
+                  remote_synapse_url=remote_synapse_url, dry_run=dry_run)
