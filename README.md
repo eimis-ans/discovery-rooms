@@ -1,5 +1,12 @@
 # discovery-rooms
 
+⚠️ This project archived, see [EIMIS Synapse tools](https://github.com/eimis-ans/eimis-synapse-tools) project and do :
+
+```
+python3 src/main.py setup-discoveryroom  -r matrix.develop.eimis.incubateur.net 
+```
+---
+
 A script to automate the creation of a discovery room and add all users to it.
 
 ⚠️ _A **not** scalable way for users to discover and contact people from other matrix instances_
